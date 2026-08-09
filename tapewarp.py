@@ -113,6 +113,10 @@ def main():
     ap.add_argument("-o", "--output", help="output file (default: <input>_vhs.mp4)")
     ap.add_argument("--wear", choices=PRESETS, default="worn",
                     help="how beat-up the tape is (default: worn)")
+    ap.add_argument("--dropouts", choices=["subtle", "classic", "off"], default="subtle",
+                    help="white dropout streaks: subtle = faint smears like a VCR "
+                         "with dropout compensation (default), classic = harsh "
+                         "bright slashes, off = none")
     ap.add_argument("--ratio", choices=["source", "4:3", "4:3-box"], default="source",
                     help="4:3 crops to the era's camera framing; "
                          "4:3-box letterboxes instead (nothing lost)")
@@ -333,12 +337,21 @@ def main():
         Q *= desat
         Y = np.clip(Y + lift[:, None], 0, 1.2)
 
-        # dropout streaks
-        if rng.random() < P["dropout_p"]:
+        # dropout streaks — oxide shedding; a real VCR's dropout compensation
+        # patched these with the previous scanline, so default to faint smears
+        if args.dropouts != "off" and rng.random() < P["dropout_p"] * \
+                (1.0 if args.dropouts == "classic" else 0.6):
             for _ in range(rng.integers(1, 3)):
-                ry, rx = int(rng.integers(0, H - 2)), int(rng.integers(0, max(1, W - 60)))
-                Y[ry:ry + rng.integers(1, 3), rx:rx + int(rng.integers(40, 260))] = \
-                    0.95 if rng.random() < 0.8 else 0.05
+                ry = int(rng.integers(0, H - 2))
+                rx = int(rng.integers(0, max(1, W - 60)))
+                ln = int(rng.integers(40, 220))
+                seg = Y[ry:ry + 1, rx:rx + ln]
+                a = np.sin(np.linspace(0, np.pi, seg.shape[1]))[None, :]  # feathered ends
+                if args.dropouts == "classic":
+                    lvl, mix = (0.95 if rng.random() < 0.8 else 0.05), 0.9
+                else:
+                    lvl, mix = 0.85, 0.35  # dim blend, reads as a smear not a slash
+                Y[ry:ry + 1, rx:rx + ln] = seg * (1 - a * mix) + lvl * a * mix
 
         # noise: streaky luma grain + soft chroma noise
         Y += box_x(rng.normal(0, 1, (H, W)).astype(np.float32), 1) * (P["noise"] + noise_boost[:, None])

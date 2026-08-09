@@ -25,8 +25,10 @@ actually degrades:
 - **Chroma abuse in YIQ space** (NTSC's actual color encoding) — heavy
   horizontal chroma bleed, chroma delayed relative to luma, drifting
   green/magenta color bands
-- **Tape ghosting** (previous-frame smear), dropout streaks, streaky luma
-  grain, interlace field flicker, lifted blacks, magenta cast, vignette
+- **Tape ghosting** (previous-frame smear), faint dropout smears (real VCRs
+  had dropout compensation, so harsh white slashes are opt-in via
+  `--dropouts classic`), streaky luma grain, interlace field flicker, lifted
+  blacks, magenta cast, vignette
 - **Camcorder OSD** — blocky `PLAY ▶` / `SP` overlay, running tape counter,
   and a burned-in date/time stamp in the bottom-right corner, where 90s
   camcorders actually put it
@@ -70,6 +72,8 @@ python tapewarp.py clip.mov --date none               # no stamp
 
 # extras
 python tapewarp.py clip.mov --counter        # running VCR tape counter
+python tapewarp.py clip.mov --dropouts classic   # harsh white dropout slashes
+python tapewarp.py clip.mov --dropouts off       # no dropout streaks at all
 python tapewarp.py clip.mov --no-osd         # image degradation only, no overlay text
 python tapewarp.py clip.mov --no-audio-fx    # leave audio untouched
 python tapewarp.py clip.mov --seed 7         # different random glitch timing
