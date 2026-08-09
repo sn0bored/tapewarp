@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.mp4
+*.mov
+!docs/*.gif
+.DS_Store
