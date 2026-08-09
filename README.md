@@ -106,3 +106,8 @@ No frame is ever treated the same way twice. That's the whole point.
 ## License
 
 MIT. Do whatever you want with it.
+
+---
+
+Built by [Lanier](https://lanierdev.com), an applied AI studio. More free
+tools at [lanierdev.com/tools](https://lanierdev.com/tools).
