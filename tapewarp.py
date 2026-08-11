@@ -133,6 +133,13 @@ def main():
                     help="date/time corner; bottom-right is period-accurate (default)")
     ap.add_argument("--counter", action="store_true",
                     help="running VCR tape counter (top-right, under SP)")
+    ap.add_argument("--wobble", type=float, default=1.0,
+                    help="scale the per-line wave warp: 1.0 = full (default), "
+                         "0.3 = gentle drift, 0 = dead steady. Edge tear and "
+                         "head-switch noise are unaffected")
+    ap.add_argument("--bleed", type=float, default=1.0,
+                    help="scale chroma bleed and delay: 1.0 = full (default), "
+                         "0.5 keeps colored text legible")
     ap.add_argument("--no-osd", action="store_true", help="skip PLAY/SP/date overlay")
     ap.add_argument("--no-audio-fx", action="store_true", help="pass audio through untouched")
     ap.add_argument("--seed", type=int, default=90, help="random seed (default: 90)")
@@ -183,6 +190,9 @@ def main():
     k /= k.sum()
     band_i = np.convolve(rng.normal(0, 1, track_len).astype(np.float32), k, "same")
     band_q = np.convolve(rng.normal(0, 1, track_len).astype(np.float32), k, "same")
+
+    bleed_r = int(round(8 * max(0.0, args.bleed)))
+    bleed_dx = int(round(3 * max(0.0, args.bleed)))
 
     yn = np.linspace(0, 1, H, dtype=np.float32)
     xr = (np.arange(W, dtype=np.float32) - W / 2) / (W / 2)
@@ -280,8 +290,8 @@ def main():
         Y = Y + 0.45 * (Y - box_x(Y, 4))
 
         # chroma: heavy horizontal bleed, delayed right and down a line
-        I = np.roll(box_x(I, 8), (1, 3), axis=(0, 1)) * 0.95
-        Q = np.roll(box_x(Q, 8), (1, 3), axis=(0, 1)) * 0.95
+        I = np.roll(box_x(I, bleed_r), (1, bleed_dx), axis=(0, 1)) * 0.95
+        Q = np.roll(box_x(Q, bleed_r), (1, bleed_dx), axis=(0, 1)) * 0.95
 
         # ---- per-line displacement field (the part that "moves") ----
         shifts = (1.7 * np.sin(2 * np.pi * (yn * 1.6 + t * 0.35))
@@ -291,6 +301,7 @@ def main():
         bad = rng.random(H) < 0.02  # occasional torn lines
         shifts[bad] += rng.uniform(-3.5, 3.5, bad.sum())
         shifts += np.clip((yn - 0.86) / 0.14, 0, 1) * rng.normal(0, 2.2, H).astype(np.float32)
+        shifts *= args.wobble  # tracking bands and edge tear are added after this
 
         noise_boost = np.zeros(H, dtype=np.float32)
         desat = np.ones(H, dtype=np.float32)

@@ -34,6 +34,11 @@ actually degrades:
   camcorders actually put it
 - **Tape-wow audio** — pitch wobble, lowpass, hiss
 
+Footage with text on screen is the one case where full strength fights you —
+title cards and credits get eaten by tracking bands and chroma smear. `--wear
+clean --wobble 0.3 --bleed 0.5` keeps the tape look and leaves the words
+readable.
+
 ## Install
 
 You need [ffmpeg](https://ffmpeg.org) on your PATH, Python 3.9+, and numpy:
@@ -69,6 +74,11 @@ python tapewarp.py clip.mov --date "SEP.7 1998" --time "PM 3:12"
 python tapewarp.py clip.mov --date-style numeric      # " 9 7 1998" JVC/Panasonic style
 python tapewarp.py clip.mov --stamp-pos bl            # bottom-left (some JVC/Panasonic)
 python tapewarp.py clip.mov --date none               # no stamp
+
+# dial the warp back when the frame has text to read
+python tapewarp.py clip.mov --wobble 0.3     # gentle drift instead of full wave warp
+python tapewarp.py clip.mov --wobble 0       # dead steady (grain and color stay)
+python tapewarp.py clip.mov --bleed 0.5      # less chroma smear; colored text stays legible
 
 # extras
 python tapewarp.py clip.mov --counter        # running VCR tape counter
